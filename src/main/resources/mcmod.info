@@ -1,0 +1,9 @@
+[{
+  "modid": "patchouliweb",
+  "name": "Patchouli Web",
+  "description": "A static website generator system for Patchouli",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["comp500"],
+  "url": "https://github.com/comp500/patchouli-web/"
+}]
