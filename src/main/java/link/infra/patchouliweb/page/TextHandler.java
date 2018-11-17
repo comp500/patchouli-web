@@ -1,19 +1,17 @@
 package link.infra.patchouliweb.page;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 
 import link.infra.patchouliweb.PatchouliWeb;
-import link.infra.patchouliweb.page.text.TextParser;
 import vazkii.patchouli.client.book.page.PageText;
 import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
 public class TextHandler implements IPageHandler<PageText> {
 
 	@Override
-	public String processPage(PageText page) {
+	public String processPage(PageText page, TextParser parser) {
 		StringBuilder builder = new StringBuilder();
-		String title = null, text = null;
+		String title = "", text = "";
 		try {
 			// yikes, disgusting reflection
 			Field titleField = PageText.class.getDeclaredField("title");
@@ -25,8 +23,6 @@ public class TextHandler implements IPageHandler<PageText> {
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			PatchouliWeb.logger.warn(e);
 		}
-		
-		TextParser parser = new TextParser(new HashMap<String, String>());
 		
 		if (title != null && title.length() > 0) {
 			builder.append("# ");

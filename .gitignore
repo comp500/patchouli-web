@@ -89,3 +89,6 @@ gradle-app.setting
 
 # ForgeGradle
 /run/
+
+# testing stuff lol
+/hugotest/
