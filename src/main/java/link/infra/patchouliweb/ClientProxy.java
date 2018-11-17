@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 
+import link.infra.patchouliweb.page.IPageHandler;
 import link.infra.patchouliweb.page.TextHandler;
 import link.infra.patchouliweb.page.TextParser;
 import net.minecraft.client.resources.I18n;
@@ -134,10 +135,7 @@ public class ClientProxy extends CommonProxy {
 			doEntry(book, entry, orderMap.getOrDefault(entry, 1000), parser);
 		}
 		
-		PatchouliWeb.logger.info("a");
 		for (Entry<String, String> entry : parser.getAllTemplates().entrySet()) {
-			PatchouliWeb.logger.info(entry.getKey());
-			PatchouliWeb.logger.info(entry.getValue());
 			doShortcode(entry.getKey(), entry.getValue());
 		}
 	}
@@ -165,15 +163,24 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 	
+	// yikes big generic
+	public static final Map<Class<? extends BookPage>, IPageHandler> pageHandlers = new HashMap<Class<? extends BookPage>, IPageHandler>();
+	
+	static {
+		pageHandlers.put(PageText.class, new TextHandler());
+	}
+	
 	public String doPage(BookPage page, TextParser parser) {
 		// TODO: page anchors?
-		if (page instanceof PageText) {
-			return new TextHandler().processPage((PageText) page, parser);
-		} else {
-			String type = page.sourceObject.get("type").getAsString();
-			PatchouliWeb.logger.info("Page type unsupported! Type: " + type);
-			return "Page type unsupported! Type: " + type;
+		
+		for (Entry<Class<? extends BookPage>, IPageHandler> entry : pageHandlers.entrySet()) {
+			if (entry.getKey().isInstance(page)) {
+				return entry.getValue().processPage(page, parser);
+			}
 		}
+		String type = page.sourceObject.get("type").getAsString();
+		PatchouliWeb.logger.info("Page type unsupported! Type: " + type);
+		return "Page type unsupported! Type: " + type;
 	}
 	
 	public void doShortcode(String name, String contents) {

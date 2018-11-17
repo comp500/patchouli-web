@@ -157,15 +157,6 @@ public class TextParser {
 		}
 	}
 	
-	public static class ColorCodeStyleCommandTracker extends ColorStyleCommandTracker {
-		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			Map<String, String> codeMap = new HashMap<String, String>();
-			
-			return super.trigger(codeMap.getOrDefault(command, command), sb, parser);
-		}
-	}
-	
 	public static class KeybindCommandTracker implements CommandTracker {
 		private KeyBinding getKeybind(String keybind) {
 			KeyBinding[] keys = Minecraft.getMinecraft().gameSettings.keyBindings;
@@ -258,18 +249,10 @@ public class TextParser {
 			}
 			return false;
 		}
-		
-		@Override
-		public Map<String, String> getTemplates() {
-			Map<String, String> templateMap = new HashMap<String, String>();
-			templateMap.put("tooltip", "<span title=\"{{ .Get 0 }}\">{{ .Inner }}</span>");
-			return templateMap;
-		}
 	}
 	
 	// TODO: api to add your own CommandTrackers
-	public static List<CommandTracker> COMMANDS = new ArrayList<CommandTracker>();
-	public List<CommandTracker> loadedCommands = new ArrayList<CommandTracker>();
+	public static final List<CommandTracker> COMMANDS = new ArrayList<CommandTracker>();
 	
 	static {
 		// Newline
@@ -296,7 +279,7 @@ public class TextParser {
 		COMMANDS.add(new TooltipCommandTracker());
 	}
 	
-	public static Map<String, String> MACROS = new HashMap<String, String>();
+	public static final Map<String, String> MACROS = new HashMap<String, String>();
 	public Map<String, String> loadedMacros = new HashMap<String, String>();
 	
 	static {
@@ -358,7 +341,7 @@ public class TextParser {
 				if (currentCommandString.length() == 0) {
 					hasTriggered = true; // So that clearing twice won't add the $()
 				}
-				for (CommandTracker tracker : loadedCommands) {
+				for (CommandTracker tracker : COMMANDS) {
 					if (tracker.trigger(currentCommandString, sb, this)) {
 						hasTriggered = true;
 					}
@@ -379,8 +362,8 @@ public class TextParser {
 	
 	public Map<String, String> getAllTemplates() {
 		Map<String, String> allOfThem = new HashMap<String, String>();
-		for (CommandTracker tracker : loadedCommands) {
-			tracker.getTemplates().putAll(allOfThem);
+		for (CommandTracker tracker : COMMANDS) {
+			allOfThem.putAll(tracker.getTemplates());
 		}
 		return allOfThem;
 	}
@@ -390,7 +373,6 @@ public class TextParser {
 	public TextParser(Map<String, String> macros, String bookID) {
 		this.loadedMacros.putAll(MACROS); // Put default macros in first
 		this.loadedMacros.putAll(macros);
-		this.loadedCommands.addAll(COMMANDS);
 		this.bookID = bookID;
 	}
 	
