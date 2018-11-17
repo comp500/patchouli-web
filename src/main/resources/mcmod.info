@@ -5,5 +5,6 @@
   "version": "${version}",
   "mcversion": "${mcversion}",
   "authorList": ["comp500"],
-  "url": "https://github.com/comp500/patchouli-web/"
+  "url": "https://github.com/comp500/patchouli-web/",
+  "credits": "Thanks to Vazkii for Patchouli, and unascribed for the block rendering code."
 }]

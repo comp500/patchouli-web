@@ -1,34 +1,30 @@
 package link.infra.patchouliweb.page;
 
-import java.lang.reflect.Field;
-
 import link.infra.patchouliweb.PatchouliWeb;
+import link.infra.patchouliweb.render.ResourceProvider;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import vazkii.patchouli.client.book.BookPage;
 import vazkii.patchouli.client.book.page.PageText;
 import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
-public class TextHandler implements IPageHandler {
+public class HandlerText implements IHandlerPage {
 
 	@Override
-	public String processPage(BookPage page, TextParser parser) {
+	public String processPage(BookPage page, TextParser parser, ResourceProvider provider) {
 		PageText pageText = (PageText) page;
 		StringBuilder builder = new StringBuilder();
-		String title = "", text = "";
+		String title = null, text = null;
 		try {
 			// yikes, disgusting reflection
-			Field titleField = PageText.class.getDeclaredField("title");
-			titleField.setAccessible(true);
-			title = (String) titleField.get(pageText);
-			Field textField = PageWithText.class.getDeclaredField("text");
-			textField.setAccessible(true);
-			text = (String) textField.get(pageText);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			title = (String) ReflectionHelper.getPrivateValue(PageText.class, pageText, "title");
+			text = (String) ReflectionHelper.getPrivateValue(PageWithText.class, pageText, "text");
+		} catch (Exception e) {
 			PatchouliWeb.logger.warn(e);
 		}
 		
 		if (title != null && title.length() > 0) {
 			builder.append("# ");
-			builder.append(parser.processText(title));
+			builder.append(title);
 			builder.append("\n\n");
 		}
 		if (text != null && text.length() > 0) {
@@ -36,6 +32,11 @@ public class TextHandler implements IPageHandler {
 		}
 		
 		return builder.toString();
+	}
+
+	@Override
+	public boolean isSupported(BookPage page) {
+		return page instanceof PageText;
 	}
 
 }

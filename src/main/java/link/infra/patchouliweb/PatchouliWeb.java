@@ -8,8 +8,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli")
-@Mod.EventBusSubscriber(modid = PatchouliWeb.MODID)
+@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli", clientSideOnly = true)
 public class PatchouliWeb {
 
 	public static final String MODID = "patchouliweb";
