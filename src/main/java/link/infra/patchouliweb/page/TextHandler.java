@@ -37,7 +37,6 @@ public class TextHandler implements IPageHandler<PageText> {
 			builder.append(parser.processText(text));
 		}
 		
-		PatchouliWeb.logger.info(builder.toString());
 		return builder.toString();
 	}
 

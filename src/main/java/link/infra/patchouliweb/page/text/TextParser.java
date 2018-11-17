@@ -9,13 +9,7 @@ public class TextParser {
 	
 	public static interface CommandTracker {
 		// trigger returns true when this command tracker has changed state
-		public boolean trigger(String command);
-		// Does the command have state, does it have an end/start tag?
-		public default boolean biTriggerable() {
-			return true;
-		}
-		public String prependText();
-		public String appendText();
+		public boolean trigger(String command, StringBuilder sb);
 		public default Map<String, String> getTemplates() {
 			return new HashMap<String, String>();
 		}
@@ -31,23 +25,12 @@ public class TextParser {
 			this.tag = tag;
 		}
 		
-		public boolean trigger(String command) {
+		public boolean trigger(String command, StringBuilder sb) {
 			if (command.equals(commandName)) {
+				sb.append(tag);
 				return true;
 			}
 			return false;
-		}
-		
-		@Override
-		public boolean biTriggerable() {
-			return false;
-		}
-		
-		public String prependText() {
-			return "";
-		}
-		public String appendText() {
-			return tag;
 		}
 	}
 	
@@ -63,23 +46,18 @@ public class TextParser {
 			this.endingTag = endingTag;
 		}
 		
-		public boolean trigger(String command) {
+		public boolean trigger(String command, StringBuilder sb) {
 			if (!currentState && command.equals(commandName)) {
 				currentState = true;
+				sb.append(startingTag);
 				return true;
 			}
 			if (currentState && command.equals("")) {
 				currentState = false;
+				sb.append(endingTag);
 				return true;
 			}
 			return false;
-		}
-		
-		public String prependText() {
-			return startingTag;
-		}
-		public String appendText() {
-			return endingTag;
 		}
 	}
 	
@@ -90,35 +68,26 @@ public class TextParser {
 	}
 	
 	public static class ListCommandTracker implements CommandTracker {
-		boolean isFirst = true;
-		boolean currentState = false;
-		
-		public void resetState() {
-			isFirst = true;
-		}
+		boolean inList = false;
 		
 		@Override
-		public boolean trigger(String command) {
-			if (!currentState && command.equals("li")) {
-				currentState = true;
-				return true;
-			}
-			if (currentState) { // TODO: allow single line formatting in lists
-				currentState = false;
-				return true;
+		public boolean trigger(String command, StringBuilder sb) {
+			if (command.equals("li")) {
+				if (inList) {
+					sb.append("\n- ");
+					return true;
+				} else {
+					inList = true;
+					sb.append("\n\n- ");
+					return true;
+				}
+			} else {
+				if (inList && command.equals("br2")) {
+					inList = false;
+					return true;
+				}
 			}
 			return false;
-		}
-		
-		public String prependText() {
-			if (isFirst) {
-				return "\n\n- ";
-			} else {
-				return "- ";
-			}
-		}
-		public String appendText() {
-			return "\n";
 		}
 	}
 	
@@ -191,8 +160,6 @@ public class TextParser {
 			tracker.resetState();
 		}
 		
-		// triggerStatus tracks the status of CommandTrackers, so that when they are turned off they are evaluated
-		Map<CommandTracker, Boolean> triggerStatus = new HashMap<CommandTracker, Boolean>();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < text.length(); i++) {
 			if (text.charAt(i) == '$' && text.length() > i+2 && text.charAt(i+1) == '(') {
@@ -208,20 +175,8 @@ public class TextParser {
 					hasTriggered = true; // So that clearing twice won't add the $()
 				}
 				for (CommandTracker tracker : loadedCommands) {
-					if (tracker.trigger(currentCommandString)) {
+					if (tracker.trigger(currentCommandString, sb)) {
 						hasTriggered = true;
-						if (tracker.biTriggerable()) {
-							if (triggerStatus.get(tracker) != null && triggerStatus.get(tracker)) {
-								// triggered -> untriggered
-								sb.append(tracker.appendText());
-							} else {
-								// untriggered -> triggered
-								triggerStatus.put(tracker, true);
-								sb.append(tracker.prependText());
-							}
-						} else {
-							sb.append(tracker.appendText());
-						}
 					}
 				}
 				
@@ -235,7 +190,7 @@ public class TextParser {
 			}
 		}
 		
-		return text + "\n" + sb.toString();
+		return sb.toString();
 	}
 	
 	public TextParser(Map<String, String> macros) {
