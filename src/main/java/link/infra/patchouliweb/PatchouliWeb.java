@@ -14,6 +14,7 @@ public class PatchouliWeb {
 	public static final String MODID = "patchouliweb";
 	public static final String MODNAME = "Patchouli Web";
 	public static final String VERSION = "1.12.2-1.0.0";
+	public static final String UNDERSCORENAME = "patchouli_web";
 
 	@Mod.Instance
 	public static PatchouliWeb instance;

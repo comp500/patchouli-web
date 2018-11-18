@@ -35,10 +35,6 @@ public class TextParser {
 		public default boolean breaksOn(String command) {
 			return command.equals("");
 		}
-		// TODO: move to separate files, rather than a set of functions?
-		public default Map<String, String> getTemplates() {
-			return new HashMap<String, String>();
-		}
 	}
 	
 	public static class SimpleCommandTracker implements CommandTracker {
@@ -177,15 +173,6 @@ public class TextParser {
 		public boolean breaksOn(String command) {
 			return command.equals("") || command.equals("#000") || command.equals("#000000");
 		}
-		
-		@Override
-		public Map<String, String> getTemplates() {
-			Map<String, String> templateMap = new HashMap<String, String>();
-			templateMap.put("item", "<span class=\"text-item\">{{ .Inner }}</span>");
-			templateMap.put("thing", "<span class=\"text-thing\">{{ .Inner }}</span>");
-			templateMap.put("color", "<span style=\"color: {{ .Get 0 }}\">{{ .Inner }}</span>");
-			return templateMap;
-		}
 	}
 	
 	public static class KeybindCommandTracker implements CommandTracker {
@@ -220,13 +207,6 @@ public class TextParser {
 		public boolean matches(String command) {
 			return command.startsWith("k:");
 		}
-		
-		@Override
-		public Map<String, String> getTemplates() {
-			Map<String, String> templateMap = new HashMap<String, String>();
-			templateMap.put("keybind", "<code title=\"{{ .Get 1 }}\">{{ .Get 0 }}</code>");
-			return templateMap;
-		}
 	}
 	
 	public static class TooltipCommandTracker implements CommandTracker {
@@ -257,13 +237,6 @@ public class TextParser {
 		@Override
 		public boolean breaksOn(String command) {
 			return command.equals("") || command.equals("/t");
-		}
-		
-		@Override
-		public Map<String, String> getTemplates() {
-			Map<String, String> templateMap = new HashMap<String, String>();
-			templateMap.put("tooltip", "<span title=\"{{ .Get 0 }}\">{{ .Inner }}</span>");
-			return templateMap;
 		}
 	}
 	
@@ -513,14 +486,6 @@ public class TextParser {
 		}
 		
 		return sb.toString();
-	}
-	
-	public Map<String, String> getAllTemplates() {
-		Map<String, String> allOfThem = new HashMap<String, String>();
-		for (CommandTracker tracker : COMMANDS) {
-			allOfThem.putAll(tracker.getTemplates());
-		}
-		return allOfThem;
 	}
 	
 	final String bookID;

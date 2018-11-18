@@ -1,6 +1,5 @@
 package link.infra.patchouliweb;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -12,16 +11,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 
 import link.infra.patchouliweb.page.HandlerEmpty;
-import link.infra.patchouliweb.page.IHandlerPage;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
 import link.infra.patchouliweb.page.HandlerText;
+import link.infra.patchouliweb.page.IHandlerPage;
 import link.infra.patchouliweb.page.TextParser;
 import link.infra.patchouliweb.render.ItemStackRenderer;
 import link.infra.patchouliweb.render.ResourceProvider;
@@ -44,32 +42,37 @@ import vazkii.patchouli.common.book.Book;
 import vazkii.patchouli.common.book.BookRegistry;
 
 public class ClientProxy extends CommonProxy {
-	protected File outputFolder;
-	
-	public ClientProxy() {
-		MinecraftForge.EVENT_BUS.register(this);
-	}
+	TemplateLoader templateLoader;
 	
 	@Override
 	public void preInit(FMLPreInitializationEvent e) {
-		outputFolder = new File(e.getSuggestedConfigurationFile().getParentFile().getParentFile(), "patchouli_web_output");
-		if (!outputFolder.exists()) {
-			outputFolder.mkdir();
+		if (!isEnabled()) {
+			PatchouliWeb.logger.info("Patchouli Web is not enabled.");
+			return;
 		}
-		if (!outputFolder.isDirectory()) {
-			throw new RuntimeException("patchouli_web_output should be a directory! Delete the file now if it exists.");
-		}
+		MinecraftForge.EVENT_BUS.register(this);
+		templateLoader = new TemplateLoader();
+		templateLoader.loadTemplates(e);
 	}
 	
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onFrameStart(RenderTickEvent e) {
-		if (!isEnabled()) {
-			PatchouliWeb.logger.info("Patchouli Web is not enabled.");
-			MinecraftForge.EVENT_BUS.unregister(this);
-			return;
-		}
 		if (e.phase == Phase.START) {
 			PatchouliWeb.logger.info("Patchouli Web is enabled, starting compilation of books...");
+			
+			PatchouliWeb.logger.info("Cleaning output directory...");
+			try {
+				templateLoader.cleanOutput();
+			} catch (IOException ex) {
+				PatchouliWeb.logger.error("Error cleaning output directory: ", ex);
+			}
+			
+			PatchouliWeb.logger.info("Copying template files...");
+			try {
+				templateLoader.outputTemplates();
+			} catch (IOException ex) {
+				PatchouliWeb.logger.error("Error writing template files: ", ex);
+			}
 			
 			// Make sure that handlers added last are tested first
 			Collections.reverse(pageHandlers);
@@ -87,7 +90,7 @@ public class ClientProxy extends CommonProxy {
 			}
 			PatchouliWeb.logger.info("hello there");
 			ItemStackRenderer renderer = new ItemStackRenderer();
-			renderer.renderStack(new ItemStack(Blocks.SAND), outputFolder);
+			renderer.renderStack(new ItemStack(Blocks.SAND), templateLoader.outputFolder);
 
 			FMLCommonHandler.instance().exitJava(0, false);
 		}
@@ -109,15 +112,9 @@ public class ClientProxy extends CommonProxy {
 			entryName = entryRes.getResourcePath().substring(slashIndex + 1);
 			entryPath = entryRes.getResourcePath().substring(0, slashIndex);
 		}
-		Path folderPath = Paths.get(outputFolder.toString(), "content/page/", bookRes.getResourcePath(), entryPath);
+		Path folderPath = Paths.get(templateLoader.outputFolder.toString(), "content/page/", bookRes.getResourcePath(), entryPath);
 		folderPath.toFile().mkdirs();
 		return folderPath.resolve(entryName + ".md");
-	}
-	
-	private Path resolveShortcodePath(String shortcodeName) {
-		Path folderPath = Paths.get(outputFolder.toString(), "layouts/shortcodes/");
-		folderPath.toFile().mkdirs();
-		return folderPath.resolve(shortcodeName + ".html");
 	}
 	
 	private String buildEntryFrontMatter(Book book, BookEntry entry, int entryIndex) {
@@ -168,10 +165,6 @@ public class ClientProxy extends CommonProxy {
 		
 		for (BookEntry entry : contents.entries.values()) {
 			doEntry(book, entry, orderMap.getOrDefault(entry, 1000), parser, provider);
-		}
-		
-		for (Entry<String, String> entry : parser.getAllTemplates().entrySet()) {
-			doShortcode(entry.getKey(), entry.getValue());
 		}
 	}
 	
@@ -225,19 +218,6 @@ public class ClientProxy extends CommonProxy {
 		String type = page.sourceObject.get("type").getAsString();
 		PatchouliWeb.logger.info("Page type unsupported! Type: " + type);
 		return "Page type unsupported! Type: " + type;
-	}
-	
-	public void doShortcode(String name, String contents) {
-		// TODO: change this to a different writing thing to not leave a newline at the end
-		// https://stackoverflow.com/a/43961144/816185
-		try {
-			Path path = resolveShortcodePath(name);
-			List<String> lines = Arrays.asList(contents.split("\n"));
-			Files.write(path, lines, Charset.forName("UTF-8"));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 }
