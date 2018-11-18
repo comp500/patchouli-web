@@ -1,10 +1,13 @@
 package link.infra.patchouliweb.page;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import link.infra.patchouliweb.PatchouliWeb;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
@@ -13,9 +16,26 @@ import net.minecraft.util.ResourceLocation;
 public class TextParser {
 	
 	public static interface CommandTracker {
-		// trigger returns true when this command tracker has changed state
-		public boolean trigger(String command, StringBuilder sb, TextParser parser);
-		// TODO: move to seperate files, rather than a set of functions?
+		// addStartTag returns true when this command tracker has an end tag
+		// If this function uses the command variable, you MUST implement readdStartTag to store the previous tag
+		// isRepeated is true if the previous tag was a call to this addEndTag
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated);
+		// Never called if addStartTag returns false.
+		public void addEndTag(StringBuilder sb, ParserState ps);
+		// readdStartTag replaces the same start tag that the last addStartTag placed
+		// Override this if your tag needs to pass the original command.
+		// Never called if addStartTag returns false.
+		public default void readdStartTag(StringBuilder sb, ParserState ps) {
+			addStartTag(null, sb, ps, false);
+		}
+		// matches returns true when this command tracker can process the given command
+		public boolean matches(String command);
+		// Does this command tracker need to be closed when the given command is reached?
+		// Never called if addStartTag returns false.
+		public default boolean breaksOn(String command) {
+			return command.equals("");
+		}
+		// TODO: move to separate files, rather than a set of functions?
 		public default Map<String, String> getTemplates() {
 			return new HashMap<String, String>();
 		}
@@ -31,17 +51,21 @@ public class TextParser {
 		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (command.equals(commandName)) {
-				sb.append(tag);
-				return true;
-			}
-			return false;
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
+			sb.append(tag);
+			return false; // Return false as there is no end tag
+		}
+		
+		@Override // Do nothing
+		public void addEndTag(StringBuilder sb, ParserState ps) {}
+
+		@Override
+		public boolean matches(String command) {
+			return command.equals(commandName);
 		}
 	}
 	
 	public static class BiStyleCommandTracker implements CommandTracker {
-		boolean currentState = false;
 		final String commandName;
 		final String startingTag;
 		final String endingTag;
@@ -53,18 +77,19 @@ public class TextParser {
 		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (!currentState && command.equals(commandName)) {
-				currentState = true;
-				sb.append(startingTag);
-				return true;
-			}
-			if (currentState && command.equals("")) {
-				currentState = false;
-				sb.append(endingTag);
-				return true;
-			}
-			return false;
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
+			sb.append(startingTag);
+			return true;
+		}
+		
+		@Override
+		public void addEndTag(StringBuilder sb, ParserState ps) {
+			sb.append(endingTag);
+		}
+
+		@Override
+		public boolean matches(String command) {
+			return command.equals(commandName);
 		}
 	}
 	
@@ -75,76 +100,82 @@ public class TextParser {
 	}
 	
 	public static class ListCommandTracker implements CommandTracker {
-		boolean inList = false;
+		@Override
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
+			if (isRepeated) {
+				sb.append("\n- "); // Only one \n if already in a list
+			} else {
+				sb.append("\n\n- ");
+			}
+			return true;
+		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (command.equals("li")) {
-				if (inList) {
-					sb.append("\n- ");
-					return true;
-				} else {
-					inList = true;
-					sb.append("\n\n- ");
-					return true;
-				}
-			} else {
-				if (inList && command.equals("br2")) {
-					inList = false;
-					return true;
-				}
-			}
-			return false;
+		public void addEndTag(StringBuilder sb, ParserState ps) {
+			// Has no end tag, is closed by $(br2) which already adds necessary newlines
+		}
+		
+		@Override
+		public void readdStartTag(StringBuilder sb, ParserState ps) {
+			// Must set isRepeated to true, as we are still in a list
+			addStartTag(null, sb, ps, true);
+		}
+
+		@Override
+		public boolean matches(String command) {
+			return command.equals("li");
+		}
+		
+		@Override
+		public boolean breaksOn(String command) {
+			return command.equals("br2"); // TODO: does it break on $() as well?
 		}
 	}
 	
 	public static class ColorStyleCommandTracker implements CommandTracker {
-		boolean currentState = false;
-		String previousTag = "";
+		String previousCommand = "";
 		
-		private boolean matches(String command) {
-			return command.matches("#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})");
-		}
-		
-		private void addOpenTag(String command, StringBuilder sb) {
+		@Override
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
 			if (command.toLowerCase().equals("#b0b")) {
 				sb.append("{{% item %}}");
 			} else if (command.equals("#490")) {
 				sb.append("{{% thing %}}");
+			} else if (command.equals("#000") || command.equals("#000000")) {
+				// Do nothing, only break on $(0)
 			} else {
 				sb.append("{{% color \"" + command + "\" %}}");
 			}
-			previousTag = command;
+			previousCommand = command;
+			return true;
 		}
 		
-		private void addCloseTag(StringBuilder sb) {
-			if (previousTag.toLowerCase().equals("#b0b")) {
+		@Override
+		public void addEndTag(StringBuilder sb, ParserState ps) {
+			if (previousCommand.toLowerCase().equals("#b0b")) {
 				sb.append("{{% /item %}}");
-			} else if (previousTag.equals("#490")) {
+			} else if (previousCommand.equals("#490")) {
 				sb.append("{{% /thing %}}");
+			} else if (previousCommand.equals("#000") || previousCommand.equals("#000000")) {
+				// Do nothing, only break on $(0)
 			} else {
 				sb.append("{{% /color %}}");
 			}
 		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (!currentState && matches(command)) {
-				currentState = true;
-				addOpenTag(command, sb);
-				return true;
-			}
-			if (currentState && (command.equals("") || command.equals("#000"))) {
-				currentState = false;
-				addCloseTag(sb);
-				return true;
-			}
-			if (currentState && matches(command) && !command.equals(previousTag)) {
-				addCloseTag(sb);
-				addOpenTag(command, sb);
-				return true;
-			}
-			return false;
+		public void readdStartTag(StringBuilder sb, ParserState ps) {
+			addStartTag(previousCommand, sb, ps, false);
+		}
+		
+		@Override
+		public boolean matches(String command) {
+			return command.matches("#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})");
+		}
+		
+		@Override
+		public boolean breaksOn(String command) {
+			return command.equals("") || command.equals("#000") || command.equals("#000000");
 		}
 		
 		@Override
@@ -170,19 +201,24 @@ public class TextParser {
 		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (command.startsWith("k:")) {
-				KeyBinding k = getKeybind(command.substring(2));
-				if (k != null) {
-					// TODO: does this vary between translations?
-					String translatedDescription = I18n.format(k.getKeyDescription());
-					sb.append("{{< keybind \"" + k.getDisplayName() + "\" \"" + translatedDescription + "\" >}}");
-				} else {
-					sb.append("{{< keybind \"N/A\" \"Failed to obtain keybind\" >}}");
-				}
-				return true;
+		public boolean addStartTag(String command, StringBuilder sb, ParserState parser, boolean isRepeated) {
+			KeyBinding k = getKeybind(command.substring(2));
+			if (k != null) {
+				// TODO: does this vary between translations?
+				String translatedDescription = I18n.format(k.getKeyDescription());
+				sb.append("{{< keybind \"" + k.getDisplayName() + "\" \"" + translatedDescription + "\" >}}");
+			} else {
+				sb.append("{{< keybind \"N/A\" \"Failed to obtain keybind\" >}}");
 			}
-			return false;
+			return false; // Return false as there is no end tag
+		}
+		
+		@Override // Do nothing
+		public void addEndTag(StringBuilder sb, ParserState ps) {}
+		
+		@Override
+		public boolean matches(String command) {
+			return command.startsWith("k:");
 		}
 		
 		@Override
@@ -194,21 +230,33 @@ public class TextParser {
 	}
 	
 	public static class TooltipCommandTracker implements CommandTracker {
-		boolean currentState = false;
+		String previousCommand = "";
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (!currentState && command.startsWith("t:")) {
-				currentState = true;
-				sb.append("{{% tooltip \"" + command.substring(2) + "\" %}}");
-				return true;
-			}
-			if (currentState && (command.equals("") || command.equals("\t"))) {
-				currentState = false;
-				sb.append("{{% /tooltip %}}");
-				return true;
-			}
-			return false;
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
+			sb.append("{{% tooltip \"" + command.substring(2) + "\" %}}");
+			previousCommand = command;
+			return true;
+		}
+		
+		@Override
+		public void addEndTag(StringBuilder sb, ParserState ps) {
+			sb.append("{{% /tooltip %}}");
+		}
+		
+		@Override
+		public void readdStartTag(StringBuilder sb, ParserState ps) {
+			addStartTag(previousCommand, sb, ps, false);
+		}
+		
+		@Override
+		public boolean matches(String command) {
+			return command.startsWith("t:");
+		}
+		
+		@Override
+		public boolean breaksOn(String command) {
+			return command.equals("") || command.equals("/t");
 		}
 		
 		@Override
@@ -221,7 +269,7 @@ public class TextParser {
 	
 	public static class LinkCommandTracker implements CommandTracker {
 		boolean currentState = false;
-		String previousURL = "";
+		String previousCommand = "";
 		
 		public String resolveURL(String url, String bookID) {
 			if (url.startsWith("http")) { // External url
@@ -233,21 +281,32 @@ public class TextParser {
 		}
 		
 		@Override
-		public boolean trigger(String command, StringBuilder sb, TextParser parser) {
-			if (!currentState && command.startsWith("l:")) {
-				currentState = true;
-				sb.append("[");
-				previousURL = resolveURL(command.substring(2), parser.bookID);
-				return true;
-			}
-			if (currentState && (command.equals("") || command.equals("/l"))) {
-				currentState = false;
-				sb.append("](");
-				sb.append(previousURL);
-				sb.append(")");
-				return true;
-			}
-			return false;
+		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
+			sb.append("[");
+			previousCommand = command;
+			return true;
+		}
+		
+		@Override
+		public void addEndTag(StringBuilder sb, ParserState ps) {
+			sb.append("](");
+			sb.append(resolveURL(previousCommand.substring(2), ps.bookID));
+			sb.append(")");
+		}
+		
+		@Override
+		public void readdStartTag(StringBuilder sb, ParserState ps) {
+			addStartTag(previousCommand, sb, ps, false);
+		}
+		
+		@Override
+		public boolean matches(String command) {
+			return command.startsWith("l:");
+		}
+		
+		@Override
+		public boolean breaksOn(String command) {
+			return command.equals("") || command.equals("/l");
 		}
 	}
 	
@@ -265,11 +324,11 @@ public class TextParser {
 		// Obfuscate
 		COMMANDS.add(new BiStyleCommandTracker("k", "{{% obfuscate %}}", "{{% /obfuscate %}}"));
 		// Bold
-		COMMANDS.add(new SymmetricStyleCommandTracker("l", "**"));
+		COMMANDS.add(new SymmetricStyleCommandTracker("l", "__"));
 		// Strike
 		COMMANDS.add(new SymmetricStyleCommandTracker("m", "~~"));
 		// Underline
-		COMMANDS.add(new SymmetricStyleCommandTracker("n", "__"));
+		COMMANDS.add(new BiStyleCommandTracker("n", "<span style=\"text-decoration: underline\">", "</span>"));
 		// Italics
 		COMMANDS.add(new SymmetricStyleCommandTracker("o", "*"));
 		COMMANDS.add(new LinkCommandTracker());
@@ -324,10 +383,21 @@ public class TextParser {
 		return text;
 	}
 	
+	public static class ParserState {
+		public final String bookID;
+
+		public ParserState(String bookID) {
+			this.bookID = bookID;
+		}
+	}
+	
 	public String processText(String text) {
 		text = processMacros(text);
 		
 		StringBuilder sb = new StringBuilder();
+		ParserState ps = new ParserState(bookID);
+		Deque<CommandTracker> trackedCommands = new ArrayDeque<CommandTracker>();
+		
 		for (int i = 0; i < text.length(); i++) {
 			if (text.charAt(i) == '$' && text.length() > i+2 && text.charAt(i+1) == '(') {
 				i += 2;
@@ -337,20 +407,105 @@ public class TextParser {
 					i++;
 				}
 				String currentCommandString = currentCommand.toString();
-				boolean hasTriggered = false;
-				if (currentCommandString.length() == 0) {
-					hasTriggered = true; // So that clearing twice won't add the $()
+				
+				/*
+				 * This is the heart of the TextParser.
+				 * It uses rudimentary computer science to move commands between stacks to open and close tags.
+				 */
+				Deque<CommandTracker> poppedCommands = new ArrayDeque<CommandTracker>();
+				boolean wasRecognised = false; // True if the tag was parsed by the TextParser in some way
+				/*
+				 * FOR BREAKING TAGS (e.g. $(), $(/t) etc.)
+				 * Note: a command can have both breaksOn and actual tag stuff
+				 */
+				// First check breaksOn for the command in the stack
+				int stopIndex = -1;
+				int j = 0;
+				for (CommandTracker tracker : trackedCommands) {
+					if (tracker.breaksOn(currentCommandString)) {
+						stopIndex = j;
+						wasRecognised = true;
+					}
+					j++;
 				}
-				for (CommandTracker tracker : COMMANDS) {
-					if (tracker.trigger(currentCommandString, sb, this)) {
-						hasTriggered = true;
+				j = 0;
+				// Close tags up to the last broken tag
+				while (!trackedCommands.isEmpty()) {
+					if (j > stopIndex) {
+						break;
+					}
+					CommandTracker tracker = trackedCommands.pop();
+					tracker.addEndTag(sb, ps);
+					if (!tracker.breaksOn(currentCommandString)) { // Add back only if it isn't broken by this command
+						poppedCommands.push(tracker);
+					}
+					j++;
+				}
+				// Re-push tags back after closing all broken tags
+				while (!poppedCommands.isEmpty()) {
+					CommandTracker tracker = poppedCommands.pop();
+					tracker.readdStartTag(sb, ps);
+					trackedCommands.push(tracker);
+				}
+				/*
+				 * FOR REPEATED TAGS (e.g. $(f)hi$(bold) there$(0) person$() where $(0) and $(f) are the same tag type)
+				 */
+				stopIndex = -1;
+				j = 0;
+				// Check the stack of previously issued commands to find the command
+				for (CommandTracker tracker : trackedCommands) {
+					if (tracker.matches(currentCommandString)) {
+						wasRecognised = true;
+						stopIndex = j;
+						break;
+					}
+					j++;
+				}
+				j = 0;
+				// Close tags up to the previous tag
+				if (stopIndex > -1) {
+					while (!trackedCommands.isEmpty()) {
+						CommandTracker tracker = trackedCommands.pop();
+						tracker.addEndTag(sb, ps);
+						if (j < stopIndex) {
+							poppedCommands.push(tracker);
+						} else {
+							// Add new start tag, don't push onto stack (which contains pending readds)
+							tracker.addStartTag(currentCommandString, sb, ps, true);
+							// Push onto tracked commands stack
+							trackedCommands.push(tracker);
+							break;
+						}
+						j++;
+					}
+				}
+				// Re-push tags back after closing the repeated tag
+				while (!poppedCommands.isEmpty()) {
+					CommandTracker tracker = poppedCommands.pop();
+					tracker.readdStartTag(sb, ps);
+					trackedCommands.push(tracker);
+				}
+				/*
+				 * FOR ALL NORMAL TAGS (e.g. $(bold))
+				 */
+				// Check the main list of commands to find a command
+				if (stopIndex == -1) { // stopIndex == -1 means the command was not found in the stack
+					for (CommandTracker tracker : COMMANDS) {
+						if (tracker.matches(currentCommandString)) {
+							if (tracker.addStartTag(currentCommandString, sb, ps, false)) {
+								// If it returns true, tracker has an end tag and is added to trackedCommands
+								trackedCommands.push(tracker);
+							}
+							wasRecognised = true;
+							break;
+						}
 					}
 				}
 				
-				if (!hasTriggered) {
-					sb.append("$(");
-					sb.append(currentCommandString);
-					sb.append(')');
+				// If it was not recognised, print a warning
+				// Also fires when breaksOn was not called, e.g. for $(bold)no u$()$()
+				if (!wasRecognised) {
+					PatchouliWeb.logger.warn("Command $(" + currentCommandString + ") not recognised!");
 				}
 			} else {
 				sb.append(text.charAt(i));

@@ -5,7 +5,6 @@ import link.infra.patchouliweb.render.ResourceProvider;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import vazkii.patchouli.client.book.BookPage;
 import vazkii.patchouli.client.book.page.PageLink;
-import vazkii.patchouli.client.book.page.PageText;
 
 public class HandlerLink extends HandlerText {
 	
@@ -36,6 +35,6 @@ public class HandlerLink extends HandlerText {
 	
 	@Override
 	public boolean isSupported(BookPage page) {
-		return page instanceof PageText;
+		return page instanceof PageLink;
 	}
 }

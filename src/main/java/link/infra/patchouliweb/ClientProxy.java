@@ -228,6 +228,8 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	public void doShortcode(String name, String contents) {
+		// TODO: change this to a different writing thing to not leave a newline at the end
+		// https://stackoverflow.com/a/43961144/816185
 		try {
 			Path path = resolveShortcodePath(name);
 			List<String> lines = Arrays.asList(contents.split("\n"));
