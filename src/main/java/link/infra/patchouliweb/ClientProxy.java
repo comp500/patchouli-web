@@ -18,14 +18,12 @@ import com.google.gson.JsonObject;
 import link.infra.patchouliweb.page.HandlerEmpty;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
+import link.infra.patchouliweb.page.HandlerSpotlight;
 import link.infra.patchouliweb.page.HandlerText;
 import link.infra.patchouliweb.page.IHandlerPage;
 import link.infra.patchouliweb.page.TextParser;
-import link.infra.patchouliweb.render.ItemStackRenderer;
 import link.infra.patchouliweb.render.ResourceProvider;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -78,9 +76,10 @@ public class ClientProxy extends CommonProxy {
 			Collections.reverse(pageHandlers);
 
 			BookRegistry reg = BookRegistry.INSTANCE;
+			ResourceProvider provider = new ResourceProvider();
 			for (Book book : reg.books.values()) {
 				PatchouliWeb.logger.info("Book \"" + I18n.format(book.name) + "\" found, compiling...");
-				doBook(book);
+				doBook(book, provider);
 			}
 
 			if (!isRenderEnabled()) {
@@ -88,10 +87,9 @@ public class ClientProxy extends CommonProxy {
 				FMLCommonHandler.instance().exitJava(0, false);
 				return;
 			}
-			PatchouliWeb.logger.info("hello there");
-			ItemStackRenderer renderer = new ItemStackRenderer();
-			renderer.renderStack(new ItemStack(Blocks.SAND), templateLoader.outputFolder);
-
+			// Render ItemStacks
+			provider.renderAll(templateLoader.outputFolder.toPath().resolve("static/images").toFile());
+			
 			FMLCommonHandler.instance().exitJava(0, false);
 		}
 	}
@@ -124,7 +122,7 @@ public class ClientProxy extends CommonProxy {
 		return json.toString();
 	}
 	
-	public void doBook(Book book) {
+	public void doBook(Book book, ResourceProvider provider) {
 		BookContents contents = book.contents;
 		if (contents == null || contents.entries == null || contents.categories == null) {
 			PatchouliWeb.logger.warn("Book not loaded yet!");
@@ -132,7 +130,6 @@ public class ClientProxy extends CommonProxy {
 		}
 		
 		TextParser parser = new TextParser(book.macros, book.resourceLoc.getResourcePath());
-		ResourceProvider provider = new ResourceProvider();
 		
 		Map<BookEntry, Integer> orderMap = new HashMap<BookEntry, Integer>();
 		Map<BookCategory, Integer> categoryOrderMap = new HashMap<BookCategory, Integer>();
@@ -201,7 +198,7 @@ public class ClientProxy extends CommonProxy {
 		// TODO: smelting page
 		// TODO: multiblock page
 		// TODO: entity page
-		// TODO: spotlight page
+		pageHandlers.add(new HandlerSpotlight());
 		pageHandlers.add(new HandlerLink());
 		pageHandlers.add(new HandlerRelations());
 		pageHandlers.add(new HandlerEmpty());

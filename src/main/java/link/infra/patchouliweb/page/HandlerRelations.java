@@ -27,7 +27,7 @@ public class HandlerRelations implements IHandlerPage {
 			PatchouliWeb.logger.warn(e);
 		}
 		
-		if (title == null || title.length() > 0) {
+		if (title == null || title.length() == 0) {
 			title = "Related Chapters";
 		}
 		builder.append("# ");

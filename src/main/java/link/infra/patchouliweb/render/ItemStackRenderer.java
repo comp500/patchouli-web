@@ -5,9 +5,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.imageio.ImageIO;
 
@@ -20,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 
 /**
@@ -50,22 +46,9 @@ import net.minecraft.item.ItemStack;
  */
 
 public class ItemStackRenderer {
-	
-	protected static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-	
-	public void renderStack(ItemStack is, File folder) {
-		PatchouliWeb.logger.info("hi1");
-		setUpRenderState(64);
-		PatchouliWeb.logger.info("hi2");
-		PatchouliWeb.logger.info(render(is, folder.toPath().resolve("renders").toFile(), true));
-		PatchouliWeb.logger.info("hi3");
-		tearDownRenderState();
-	}
 
-	private String render(ItemStack is, File folder, boolean includeDateInFilename) {
+	protected boolean render(ItemStack is, File folder, String fileName) {
 		Minecraft mc = Minecraft.getMinecraft();
-		String filename = (includeDateInFilename ? dateFormat.format(new Date()) + "_" : "")
-				+ sanitize(is.getDisplayName());
 		GlStateManager.pushMatrix();
 		GlStateManager.clearColor(0, 0, 0, 0);
 		GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -81,26 +64,20 @@ public class ItemStackRenderer {
 			 */
 			BufferedImage img = createFlipped(readPixels(size, size));
 
-			File f = new File(folder, filename + ".png");
-			int i = 2;
-			while (f.exists()) {
-				f = new File(folder, filename + "_" + i + ".png");
-				i++;
-			}
+			File f = new File(folder, fileName + ".png");
 			f.getParentFile().mkdirs();
 			f.createNewFile();
-			PatchouliWeb.logger.info(ImageIO.write(img, "PNG", f));
-			return f.getPath();
+			return ImageIO.write(img, "PNG", f);
 		} catch (Exception ex) {
-			ex.printStackTrace();
-			return I18n.format("msg.render.fail");
+			PatchouliWeb.logger.catching(ex);
+			return false;
 		}
 	}
 
 	private int size;
 	private float oldZLevel;
 
-	private void setUpRenderState(int desiredSize) {
+	protected void setUpRenderState(int desiredSize) {
 		Minecraft mc = Minecraft.getMinecraft();
 		ScaledResolution res = new ScaledResolution(mc);
 		/*
@@ -137,7 +114,7 @@ public class ItemStackRenderer {
 		GlStateManager.disableAlpha();
 	}
 
-	private void tearDownRenderState() {
+	protected void tearDownRenderState() {
 		GlStateManager.disableLighting();
 		GlStateManager.disableColorMaterial();
 		GlStateManager.disableDepth();
@@ -146,11 +123,7 @@ public class ItemStackRenderer {
 		Minecraft.getMinecraft().getRenderItem().zLevel = oldZLevel;
 	}
 
-	private String sanitize(String str) {
-		return str.replaceAll("[^A-Za-z0-9-_ ]", "_");
-	}
-
-	public BufferedImage readPixels(int width, int height) throws InterruptedException {
+	private BufferedImage readPixels(int width, int height) throws InterruptedException {
 		/*
 		 * Make sure we're reading from the back buffer, not the front buffer. The front
 		 * buffer is what is currently on-screen, and is useful for screenshots.
