@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 
+import link.infra.patchouliweb.page.HandlerCrafting;
 import link.infra.patchouliweb.page.HandlerEmpty;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
@@ -87,7 +88,7 @@ public class ClientProxy extends CommonProxy {
 				FMLCommonHandler.instance().exitJava(0, false);
 				return;
 			}
-			// Render ItemStacks
+			// Render ItemStacks and copy images
 			provider.renderAll(templateLoader.outputFolder.toPath().resolve("static/images").toFile());
 			
 			FMLCommonHandler.instance().exitJava(0, false);
@@ -95,7 +96,7 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	public boolean isEnabled() {
-		return true;
+		return false;
 	}
 	
 	public boolean isRenderEnabled() {
@@ -194,7 +195,7 @@ public class ClientProxy extends CommonProxy {
 	static {
 		pageHandlers.add(new HandlerText());
 		// TODO: image page
-		// TODO: crafting page
+		pageHandlers.add(new HandlerCrafting());
 		// TODO: smelting page
 		// TODO: multiblock page
 		// TODO: entity page

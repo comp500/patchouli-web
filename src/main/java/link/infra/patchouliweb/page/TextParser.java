@@ -134,9 +134,9 @@ public class TextParser {
 		@Override
 		public boolean addStartTag(String command, StringBuilder sb, ParserState ps, boolean isRepeated) {
 			if (command.toLowerCase().equals("#b0b")) {
-				sb.append("{{% item %}}");
+				sb.append("{{% color/item %}}");
 			} else if (command.equals("#490")) {
-				sb.append("{{% thing %}}");
+				sb.append("{{% color/thing %}}");
 			} else if (command.equals("#000") || command.equals("#000000")) {
 				// Do nothing, only break on $(0)
 			} else {
@@ -149,9 +149,9 @@ public class TextParser {
 		@Override
 		public void addEndTag(StringBuilder sb, ParserState ps) {
 			if (previousCommand.toLowerCase().equals("#b0b")) {
-				sb.append("{{% /item %}}");
+				sb.append("{{% /color/item %}}");
 			} else if (previousCommand.equals("#490")) {
-				sb.append("{{% /thing %}}");
+				sb.append("{{% /color/thing %}}");
 			} else if (previousCommand.equals("#000") || previousCommand.equals("#000000")) {
 				// Do nothing, only break on $(0)
 			} else {

@@ -22,7 +22,7 @@ public class ResourceProvider {
 	public String requestItemStack(ItemStack stack) {
 		// Check stack doesn't already exist
 		for (Entry<String, ItemStack> entry : stacks.entrySet()) {
-			if (entry.getValue().equals(stack)) {
+			if (ItemStack.areItemStacksEqual(entry.getValue(), stack)) {
 				return entry.getKey() + FILE_FORMAT;
 			}
 		}
