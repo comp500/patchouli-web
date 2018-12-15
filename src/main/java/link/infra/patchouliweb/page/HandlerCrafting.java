@@ -5,6 +5,7 @@ import link.infra.patchouliweb.render.ResourceProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraftforge.common.crafting.IShapedRecipe;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import vazkii.patchouli.client.book.BookPage;
 import vazkii.patchouli.client.book.page.PageCrafting;
@@ -36,7 +37,7 @@ public class HandlerCrafting implements IHandlerPage {
 		}
 		
 		if (recipe1 != null) {
-			addRecipe(recipe1, builder, provider);
+			addRecipe(recipe1, builder, provider, parser);
 		}
 		
 		if (title2 != null && title2.length() > 0 && !title2.equals("-")) {
@@ -46,7 +47,7 @@ public class HandlerCrafting implements IHandlerPage {
 		}
 		
 		if (recipe2 != null) {
-			addRecipe(recipe2, builder, provider);
+			addRecipe(recipe2, builder, provider, parser);
 		}
 		
 		if (text != null && text.length() > 0) {
@@ -56,21 +57,46 @@ public class HandlerCrafting implements IHandlerPage {
 		return builder.toString();
 	}
 	
-	// TODO: rewrite to show items in correct spaces
-	private void addRecipe(IRecipe recipe, StringBuilder builder, ResourceProvider provider) {
-		builder.append("{{< crafting/recipe \"");
-		builder.append(provider.requestItemStack(recipe.getRecipeOutput()));
-		builder.append("\" >}}");
-		for (Ingredient ing : recipe.getIngredients()) {
-			builder.append("{{< crafting/ingredient ");
-			for (ItemStack stack : ing.getMatchingStacks()) {
-				builder.append('"');
-				builder.append(provider.requestItemStack(stack));
-				builder.append("\" ");
+	private void addRecipe(IRecipe recipe, StringBuilder builder, ResourceProvider provider, TextParser parser) {
+		builder.append("{{< items/craftingrecipe >}}");
+		// Put ingredients into 3x3 grid
+		ItemStack[][][] stacks = new ItemStack[3][3][0];
+		int width = 3;
+		int shiftRow = 0;
+		int shiftColumn = 0;
+		if (recipe instanceof IShapedRecipe) {
+			width = ((IShapedRecipe) recipe).getRecipeWidth();
+			if (width == 1) {
+				shiftColumn = 1; // Shift to middle so it looks better
 			}
-			builder.append(">}}");
+			if (((IShapedRecipe) recipe).getRecipeHeight() == 1) {
+				shiftRow = 1; // Shift to middle so it looks better
+			}
+		} else if (recipe.getIngredients().size() == 1) {
+			shiftRow = 1;
+			shiftColumn = 1;
 		}
-		builder.append("{{< /crafting/recipe >}}\n\n");
+		int currRow = shiftRow;
+		int currColumn = shiftColumn;
+		
+		for (Ingredient ing : recipe.getIngredients()) {
+			stacks[currRow][currColumn] = ing.getMatchingStacks();
+			currColumn++;
+			if (currColumn >= width) {
+				currColumn = shiftColumn;
+				currRow++;
+			}
+		}
+		
+		for (ItemStack[][] stacks1 : stacks) {
+			builder.append("{{< items/reciperow >}}");
+			for (ItemStack[] stacks2 : stacks1) {
+				ItemStackUtils.addRecipeIngredient(stacks2, provider, builder, parser);
+			}
+			builder.append("{{< /items/reciperow >}}");
+		}
+		ItemStackUtils.addItemStack(recipe.getRecipeOutput(), provider, builder, parser);
+		builder.append("{{< /items/craftingrecipe >}}\n\n");
 	}
 
 	@Override

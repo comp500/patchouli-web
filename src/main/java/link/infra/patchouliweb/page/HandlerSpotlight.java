@@ -36,9 +36,9 @@ public class HandlerSpotlight implements IHandlerPage {
 		}
 		
 		if (item != null) {
-			builder.append("{{< spotlight \"");
-			builder.append(provider.requestItemStack(item));
-			builder.append("\" >}}");
+			builder.append("{{< items/spotlight >}}");
+			ItemStackUtils.addItemStack(item, provider, builder, parser);
+			builder.append("{{< /items/spotlight >}}\n");
 		}
 		
 		if (text != null && text.length() > 0) {

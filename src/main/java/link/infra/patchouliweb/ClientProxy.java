@@ -17,6 +17,7 @@ import com.google.gson.JsonObject;
 
 import link.infra.patchouliweb.page.HandlerCrafting;
 import link.infra.patchouliweb.page.HandlerEmpty;
+import link.infra.patchouliweb.page.HandlerImage;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
 import link.infra.patchouliweb.page.HandlerSpotlight;
@@ -96,7 +97,7 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	public boolean isEnabled() {
-		return false;
+		return true;
 	}
 	
 	public boolean isRenderEnabled() {
@@ -194,7 +195,7 @@ public class ClientProxy extends CommonProxy {
 	
 	static {
 		pageHandlers.add(new HandlerText());
-		// TODO: image page
+		pageHandlers.add(new HandlerImage());
 		pageHandlers.add(new HandlerCrafting());
 		// TODO: smelting page
 		// TODO: multiblock page

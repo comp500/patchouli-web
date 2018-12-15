@@ -1,13 +1,19 @@
 package link.infra.patchouliweb.render;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import link.infra.patchouliweb.PatchouliWeb;
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -40,11 +46,19 @@ public class ResourceProvider {
 		return fileName + FILE_FORMAT;
 	}
 	
+	private String getImageFileName(ResourceLocation loc) {
+		String locString = loc.toString();
+		int extIndex = locString.lastIndexOf('.');
+		String ext = locString.substring(extIndex);
+		locString = locString.substring(0, extIndex);
+		// ResourceLocations are unique, no need to add "_n"
+		return "res_" + locString.replaceAll("[^A-Za-z0-9-_ ]", "_") + ext;
+	}
+	
 	public String requestImage(ResourceLocation loc) {
 		images.add(loc);
 		
-		// ResourceLocations are unique, no need to add "_n"
-		return "res_" + loc.toString().replaceAll("[^A-Za-z0-9-_ ]", "_");
+		return getImageFileName(loc);
 	}
 	
 	public void renderAll(File outputFolder) {
@@ -57,7 +71,17 @@ public class ResourceProvider {
 		}
 		renderer.tearDownRenderState();
 		
-		// TODO: copy images
+		for (ResourceLocation image : images) {
+			String fileName = getImageFileName(image);
+			try {
+				InputStream stream = Minecraft.getMinecraft().getResourceManager().getResource(image).getInputStream();
+				Path target = outputFolder.toPath().resolve(fileName);
+				Files.createDirectories(target.getParent());
+				Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				PatchouliWeb.logger.catching(e);
+			}
+		}
 	}
 	
 }
