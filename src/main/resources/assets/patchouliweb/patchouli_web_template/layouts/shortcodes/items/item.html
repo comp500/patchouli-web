@@ -1,12 +1,12 @@
 {{ if (and (eq (.Get 1) "true") (eq .Ordinal 0)) }}
 <span class="itemstack">
-	<img src="/images/{{ .Get 0 }}" width="64"/>
+	<img src="/images/{{ .Get 0 }}"/>
 {{ else if (eq (.Get 1) "true") }}
 <span class="itemstack" style="display: none;">
-	<img src="/images/{{ .Get 0 }}" width="64"/>
+	<img src="/images/{{ .Get 0 }}"/>
 {{ else }}
 <span class="itemstack">
-	<img src="/images/{{ .Get 0 }}" width="64"/>
+	<img src="/images/{{ .Get 0 }}"/>
 {{ end }}
 <span class="itemstack-tooltip">
 {{ .Inner }}

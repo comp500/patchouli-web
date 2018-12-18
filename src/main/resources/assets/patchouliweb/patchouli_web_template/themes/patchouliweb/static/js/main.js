@@ -21,32 +21,12 @@ window.setInterval(() => {
 }, 1000);
 
 let mainTooltip = document.createElement("span");
-mainTooltip.style.display = "none";
-mainTooltip.style.position = "absolute";
+mainTooltip.classList.add("itemstack-tooltip-js");
 document.body.appendChild(mainTooltip);
 
 let previousTarget = null;
 let previousHTML = null;
 let recalcTooltip = (e) => {
-	/*tooltip.style.left =
-		(e.pageX + tooltip.clientWidth + 10 < document.body.clientWidth)
-		? (e.pageX + 10 + "px")
-		: (document.body.clientWidth + 5 - tooltip.clientWidth + "px");
-	tooltip.style.top =
-		(e.pageY + tooltip.clientHeight + 10 < document.body.clientHeight)
-		? (e.pageY + 10 + "px")
-		: (document.body.clientHeight + 5 - tooltip.clientHeight + "px");*/
-	// tooltip.style.left =
-	// 	(e.clientX + tooltip.clientWidth + 10 < document.documentElement.clientWidth)
-	// 	? (e.clientX + window.scrollX + 10 + "px")
-	// 	: (document.documentElement.clientWidth + window.scrollX - 5 - tooltip.clientWidth + "px");
-	// tooltip.style.top =
-	// 	(e.clientY + tooltip.clientHeight + 10 < document.documentElement.clientHeight)
-	// 	? (e.clientY + window.scrollY + 10 + "px")
-	// 	: (document.documentElement.clientHeight + window.scrollY - 5 - tooltip.clientHeight + "px");
-	/*let rect = item.getBoundingClientRect()
-	tooltip.style.left = e.clientX - rect.left + "px";
-	tooltip.style.top = e.clientY - rect.top + "px";*/
 	if (e.target != previousTarget) {
 		previousTarget = e.target;
 		for (let tooltip of e.target.childNodes) {
@@ -71,12 +51,6 @@ let recalcTooltip = (e) => {
 };
 
 for (let item of document.getElementsByClassName("itemstack")) {
-	/*for (let tooltip of item.childNodes) {
-		if (tooltip.classList != null && tooltip.classList.contains("itemstack-tooltip")) {
-			
-			break;
-		}
-	}*/
 	item.addEventListener("mousemove", recalcTooltip, false);
 	item.addEventListener("mouseenter", recalcTooltip, false);
 	item.addEventListener("mouseleave", () => {

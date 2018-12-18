@@ -9,65 +9,59 @@ body {
 
 /* Itemstack Rendering */
 
+.itemstack img {
+	width: 32px;
+	height: 32px;
+}
+
 .itemstack-tooltip {
 	display: none;
-	position: absolute;
-	background: black;
-	border: 1px solid black;
-	padding: 0.5em;
-	color: white;
-	z-index: 1000;
 }
 
-.itemstack-tooltip p {
-	margin: 0;
-}
-
-.itemstack:hover .itemstack-tooltip {
-	/*display: block;*/
-}
-
-.itemstack {
-	width: 64px;
-	height: 64px;
+.itemstack, .empty-item {
+	width: 32px;
+	height: 32px;
 	background-color: #8B8B8B;
 	display: inline-block;
-	border: 4px solid;
+	border: 2px solid;
 	border-color: #373737 #FFF #FFF #373737;
 	position: relative;
 }
 
 /* Magic for corners */
-.itemstack::before, .itemstack::after {
+.itemstack::before, .itemstack::after, .empty-item::before, .empty-item::after {
 	background-color: #8B8B8B;
-	width: 4px;
-	height: 4px;
+	width: 2px;
+	height: 2px;
 	content: "";
 	position: absolute;
 }
 
-.itemstack::before {
-	bottom: -4px;
-	left: -4px;
+.itemstack::before, .empty-item::before {
+	bottom: -2px;
+	left: -2px;
 }
 
-.itemstack::after {
-	top: -4px;
-	right: -4px;
+.itemstack::after, .empty-item::after {
+	top: -2px;
+	right: -2px;
 }
 
 .multiitem {
 	display: inline-block;
 }
 
-.empty-item {
-	width:64px;
-	height:64px;
-	display: inline-block;
+.itemstack-tooltip-js {
+	display: none;
+	position: absolute;
+	background: black;
+	border: 1px solid black;
+	padding: 0.5em;
+	color: white;
 }
 
-.spotlight {
-	margin: 0 auto;
+.itemstack-tooltip-js p {
+	margin: 0;
 }
 
 /* Render images with pixels */
@@ -79,4 +73,37 @@ img {
     image-rendering: pixelated;					/* Chrome */
     image-rendering: optimize-contrast;			/* CSS3 Proposed */
 	-ms-interpolation-mode: nearest-neighbor;	/* IE8+ */
+}
+
+/* Spotlight */
+.spotlight {
+	display: flex;
+	justify-content: center;
+}
+
+.spotlight .itemstack img, .spotlight .itemstack {
+	width: 64px;
+	height: 64px;
+}
+
+.spotlight .itemstack {
+	border-width: 4px;
+}
+
+.spotlight .itemstack::before, .spotlight .itemstack::after {
+	background-color: #8B8B8B;
+	width: 4px;
+	height: 4px;
+	content: "";
+	position: absolute;
+}
+
+.spotlight .itemstack::before {
+	bottom: -4px;
+	left: -4px;
+}
+
+.spotlight .itemstack::after {
+	top: -4px;
+	right: -4px;
 }

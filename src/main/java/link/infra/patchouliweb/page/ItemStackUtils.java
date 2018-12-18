@@ -22,7 +22,7 @@ public class ItemStackUtils {
 		}
 		builder.append(item.getCount());
 		builder.append(" %}}\n");
-		List<String> tooltip = item.getTooltip(null, ITooltipFlag.TooltipFlags.NORMAL);
+		List<String> tooltip = item.getTooltip(null, ITooltipFlag.TooltipFlags.ADVANCED);
 		String tooltipString = "";
 		for (String line : tooltip) {
 			// Transform to work with existing text parser
