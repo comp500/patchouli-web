@@ -30,7 +30,8 @@ public class ItemStackUtils {
 		String tooltipString = "";
 		for (String line : tooltip) {
 			// Transform to work with existing text parser
-			String transformedLine = line.replaceAll("§([\\da-fklmnor])", "\\$($1)").replace("$(r)", "$()") + "$()$(br)";
+			// Terminate incomplete commands, they are almost never completed in tooltips
+			String transformedLine = line.replaceAll("\u00a7([\\da-fklmnor])", "\\$($1)").replace("$(r)", "$()") + "$()$(br)";
 			tooltipString += parser.processText(transformedLine);
 		}
 		builder.append(tooltipString);

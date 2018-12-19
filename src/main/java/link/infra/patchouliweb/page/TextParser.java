@@ -478,7 +478,9 @@ public class TextParser {
 				// If it was not recognised, print a warning
 				// Also fires when breaksOn was not called, e.g. for $(bold)no u$()$()
 				if (!wasRecognised) {
-					PatchouliWeb.logger.warn("Command $(" + currentCommandString + ") not recognised!");
+					if (currentCommandString.length() != 0) { // Ignore $()
+						PatchouliWeb.logger.warn("Command $(" + currentCommandString + ") not recognised!");
+					}
 				}
 			} else {
 				sb.append(text.charAt(i));
