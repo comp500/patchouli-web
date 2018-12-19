@@ -8,6 +8,10 @@ import net.minecraft.item.ItemStack;
 
 public class ItemStackUtils {
 	
+	private ItemStackUtils() {
+		// s t a t i c
+	}
+	
 	public static void addItemStack(ItemStack item, ResourceProvider provider, StringBuilder builder, TextParser parser) {
 		addItemStack(item, provider, builder, parser, false);
 	}

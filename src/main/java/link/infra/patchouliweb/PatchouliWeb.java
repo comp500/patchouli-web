@@ -2,13 +2,14 @@ package link.infra.patchouliweb;
 
 import org.apache.logging.log4j.Logger;
 
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli", clientSideOnly = true)
+@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli", clientSideOnly = true, guiFactory = "link.infra." + PatchouliWeb.MODID + ".gui.OptionsFactory")
 public class PatchouliWeb {
 
 	public static final String MODID = "patchouliweb";
@@ -37,6 +38,12 @@ public class PatchouliWeb {
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent e) {
 		proxy.postInit(e);
+	}
+	
+	// Stack trace from "Java has been asked to exit" looks evil
+	// This is an attempt to make it look less evil
+	protected static void successExit_NOT_AN_ERROR() {
+		FMLCommonHandler.instance().exitJava(0, false);
 	}
 	
 }
