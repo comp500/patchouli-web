@@ -20,6 +20,7 @@ import link.infra.patchouliweb.page.HandlerEmpty;
 import link.infra.patchouliweb.page.HandlerImage;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
+import link.infra.patchouliweb.page.HandlerSmelting;
 import link.infra.patchouliweb.page.HandlerSpotlight;
 import link.infra.patchouliweb.page.HandlerText;
 import link.infra.patchouliweb.page.IHandlerPage;
@@ -230,7 +231,7 @@ public class BookProcessor {
 		pageHandlers.add(new HandlerText());
 		pageHandlers.add(new HandlerImage());
 		pageHandlers.add(new HandlerCrafting());
-		// TODO: smelting page
+		pageHandlers.add(new HandlerSmelting());
 		// TODO: multiblock page
 		// TODO: entity page
 		pageHandlers.add(new HandlerSpotlight());

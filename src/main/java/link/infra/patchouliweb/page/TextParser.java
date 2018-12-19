@@ -251,6 +251,12 @@ public class TextParser {
 			if (url.startsWith("http")) { // External url
 				return url;
 			} else {
+				// TODO: support anchors
+				int hashIndex = url.lastIndexOf('#');
+				if (hashIndex > -1) {
+					url = url.substring(0, hashIndex);
+				}
+				
 				ResourceLocation loc;
 				String bookID = book.resourceLoc.getResourcePath();
 				if (url.contains(":")) {
