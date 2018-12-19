@@ -7,11 +7,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import link.infra.patchouliweb.BookProcessor;
 import link.infra.patchouliweb.PatchouliWeb;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.ResourceLocation;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.common.book.Book;
 
 public class TextParser {
 	
@@ -244,12 +247,24 @@ public class TextParser {
 		boolean currentState = false;
 		String previousCommand = "";
 		
-		public String resolveURL(String url, String bookID) {
+		public String resolveURL(String url, Book book) {
 			if (url.startsWith("http")) { // External url
 				return url;
 			} else {
-				ResourceLocation loc = new ResourceLocation(url);
-				return "{{< relref \"/" + bookID + "/" + loc.getResourcePath() + ".md\" >}}";
+				ResourceLocation loc;
+				String bookID = book.resourceLoc.getResourcePath();
+				if (url.contains(":")) {
+					loc = new ResourceLocation(url);
+				} else {
+					loc = new ResourceLocation(book.resourceLoc.getResourceDomain(), url);
+				}
+				BookEntry bookEntry = book.contents.entries.get(loc);
+				if (bookEntry != null) {
+					return "{{< relref \"/" + bookID + "/" + BookProcessor.traverseEntryPath(bookEntry) + ".md\" >}}";
+				} else {
+					PatchouliWeb.logger.error("Failed to resolve " + url);
+					return "#";
+				}
 			}
 		}
 		
@@ -263,7 +278,7 @@ public class TextParser {
 		@Override
 		public void addEndTag(StringBuilder sb, ParserState ps) {
 			sb.append("](");
-			sb.append(resolveURL(previousCommand.substring(2), ps.bookID));
+			sb.append(resolveURL(previousCommand.substring(2), ps.book));
 			sb.append(")");
 		}
 		
@@ -357,10 +372,10 @@ public class TextParser {
 	}
 	
 	public static class ParserState {
-		public final String bookID;
+		public final Book book;
 
-		public ParserState(String bookID) {
-			this.bookID = bookID;
+		public ParserState(Book book) {
+			this.book = book;
 		}
 	}
 	
@@ -368,7 +383,7 @@ public class TextParser {
 		text = processMacros(text);
 		
 		StringBuilder sb = new StringBuilder();
-		ParserState ps = new ParserState(bookID);
+		ParserState ps = new ParserState(book);
 		Deque<CommandTracker> trackedCommands = new ArrayDeque<CommandTracker>();
 		
 		for (int i = 0; i < text.length(); i++) {
@@ -490,12 +505,12 @@ public class TextParser {
 		return sb.toString();
 	}
 	
-	final String bookID;
+	final Book book;
 	
-	public TextParser(Map<String, String> macros, String bookID) {
+	public TextParser(Map<String, String> macros, Book book) {
 		this.loadedMacros.putAll(MACROS); // Put default macros in first
 		this.loadedMacros.putAll(macros);
-		this.bookID = bookID;
+		this.book = book;
 	}
 	
 }

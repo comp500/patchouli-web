@@ -26,7 +26,6 @@ import link.infra.patchouliweb.page.IHandlerPage;
 import link.infra.patchouliweb.page.TextParser;
 import link.infra.patchouliweb.render.ResourceProvider;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import vazkii.patchouli.client.book.BookCategory;
 import vazkii.patchouli.client.book.BookContents;
@@ -59,24 +58,42 @@ public class BookProcessor {
 		provider.renderAll(templateLoader.outputFolder.toPath().resolve("static/images").toFile());
 	}
 	
-	private Path resolveEntryPath(ResourceLocation bookRes, ResourceLocation entryRes) {
-		int slashIndex = entryRes.getResourcePath().lastIndexOf('/');
-		String entryName = entryRes.getResourcePath();
-		String entryPath = "";
+	public static String traverseCategoryPath(BookCategory category) {
+		String categoryName = category.getResource().getResourcePath();
+		int slashIndex = categoryName.lastIndexOf('/');
 		if (slashIndex != -1) {
-			entryName = entryRes.getResourcePath().substring(slashIndex + 1);
-			entryPath = entryRes.getResourcePath().substring(0, slashIndex);
+			categoryName = categoryName.substring(slashIndex + 1);
 		}
-		Path folderPath = Paths.get(templateLoader.outputFolder.toString(), "content/", bookRes.getResourcePath(), entryPath);
-		folderPath.toFile().mkdirs();
-		return folderPath.resolve(entryName + ".md");
+		
+		if (category.isRootCategory()) {
+			return categoryName;
+		} else {
+			return traverseCategoryPath(category.getParentCategory()) + "/" + categoryName;
+		}
 	}
 	
-	private String buildEntryFrontMatter(Book book, BookEntry entry, int entryIndex) {
-		JsonObject json = new JsonObject();
-		json.addProperty("title", entry.getName());
-		json.addProperty("weight", entryIndex);
-		return json.toString();
+	public static String traverseEntryPath(BookEntry entry) {
+		String entryName = entry.getResource().getResourcePath();
+		int slashIndex = entryName.lastIndexOf('/');
+		if (slashIndex != -1) {
+			entryName = entryName.substring(slashIndex + 1);
+		}
+		
+		return traverseCategoryPath(entry.getCategory()) + "/" + entryName;
+	}
+	
+	private Path resolveEntryPath(BookEntry entry) {
+		String entryPath = traverseEntryPath(entry);
+		Path path = Paths.get(templateLoader.outputFolder.toString(), "content/", entry.getBook().resourceLoc.getResourcePath(), entryPath + ".md");
+		path.getParent().toFile().mkdirs(); // Make parent directories
+		return path;
+	}
+	
+	private Path resolveCategoryIndexPath(BookCategory category) {
+		String categoryPath = traverseCategoryPath(category);
+		Path path = Paths.get(templateLoader.outputFolder.toString(), "content/", category.getBook().resourceLoc.getResourcePath(), categoryPath);
+		path.toFile().mkdirs(); // Make directories
+		return path.resolve("_index.md");
 	}
 	
 	private void doBook(Book book, ResourceProvider provider) {
@@ -86,11 +103,14 @@ public class BookProcessor {
 			return;
 		}
 		
-		TextParser parser = new TextParser(book.macros, book.resourceLoc.getResourcePath());
+		TextParser parser = new TextParser(book.macros, book);
 		
 		Map<BookEntry, Integer> orderMap = new HashMap<BookEntry, Integer>();
 		Map<BookCategory, Integer> categoryOrderMap = new HashMap<BookCategory, Integer>();
-		for (BookCategory category : contents.categories.values()) {
+		int j = 1;
+		List<BookCategory> categories = contents.categories.values().stream().collect(Collectors.toList());
+		Collections.sort(categories);
+		for (BookCategory category : categories) {
 			List<BookEntry> entries = contents.entries.values().stream()
 					.filter((e) -> e.getCategory() != null)
 					.filter((e) -> e.getCategory().equals(category))
@@ -103,24 +123,29 @@ public class BookProcessor {
 					.collect(Collectors.toList());
 			Collections.sort(subCategories);
 			
-			int i = 1001; // Start at 1001, as categories should be at the top?
-			// Give w=1000 to unordered entries
+			int i = 1;
+			// Give w=0 to unordered entries
 			for (BookEntry entry : entries) {
 				orderMap.put(entry, i);
 				i++;
 			}
 			
-			i = 0;
+			i = 1;
 			for (BookCategory subCategory : subCategories) {
 				categoryOrderMap.put(subCategory, i);
 				i++;
 			}
 			
-			createCategoryPage(category, book, parser);
+			categoryOrderMap.put(category, j);
+			j++;
 		}
 		
 		for (BookEntry entry : contents.entries.values()) {
-			doEntry(book, entry, orderMap.getOrDefault(entry, 1000), parser, provider);
+			doEntry(book, entry, orderMap.getOrDefault(entry, 0), parser, provider);
+		}
+		
+		for (BookCategory category : contents.categories.values()) {
+			createCategoryPage(category, book, parser, categoryOrderMap.getOrDefault(category, 0));
 		}
 		
 		// Index page
@@ -148,20 +173,19 @@ public class BookProcessor {
 		}
 	}
 	
-	private void createCategoryPage(BookCategory category, Book book, TextParser parser) {
+	private void createCategoryPage(BookCategory category, Book book, TextParser parser, int index) {
 		StringBuilder sb = new StringBuilder();
 		
 		JsonObject json = new JsonObject();
 		json.addProperty("title", I18n.format(category.getName()));
+		json.addProperty("weight", index);
 		sb.append(json.toString());
 		sb.append("\n\n");
 		
 		sb.append(parser.processText(I18n.format(category.getDescription())));
 		
-		ResourceLocation indexLoc = new ResourceLocation(category.getResource().getResourceDomain(), category.getResource().getResourcePath() + "/_index");
-		
 		try {
-			Path indexFilePath = resolveEntryPath(book.resourceLoc, indexLoc);
+			Path indexFilePath = resolveCategoryIndexPath(category);
 			List<String> lines = Arrays.asList(sb.toString().split("\n"));
 			Files.write(indexFilePath, lines, Charset.forName("UTF-8"));
 		} catch (IOException e) {
@@ -176,9 +200,14 @@ public class BookProcessor {
 			return;
 		}
 		PatchouliWeb.logger.info("Entry \"" + I18n.format(entry.getName()) + "\" found \"" + entry.getResource().toString() + "\", compiling...");
+		
 		StringBuilder sb = new StringBuilder();
-		sb.append(buildEntryFrontMatter(book, entry, index));
+		JsonObject json = new JsonObject();
+		json.addProperty("title", entry.getName());
+		json.addProperty("weight", index);
+		sb.append(json.toString());
 		sb.append("\n\n");
+		
 		// entry.getPages() only provides unlocked pages
 		List<BookPage> pages = (List<BookPage>) ReflectionHelper.getPrivateValue(BookEntry.class, entry, "realPages");
 		for (BookPage page : pages) {
@@ -186,8 +215,7 @@ public class BookProcessor {
 			sb.append("\n\n");
 		}
 		try {
-			// TODO: make entry paths based on parent categories, not actual resloc
-			Path path = resolveEntryPath(book.resourceLoc, entry.getResource());
+			Path path = resolveEntryPath(entry);
 			List<String> lines = Arrays.asList(sb.toString().split("\n"));
 			Files.write(path, lines, Charset.forName("UTF-8"));
 		} catch (IOException e) {
