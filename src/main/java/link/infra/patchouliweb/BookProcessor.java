@@ -27,6 +27,7 @@ import link.infra.patchouliweb.page.TextParser;
 import link.infra.patchouliweb.render.ResourceProvider;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import vazkii.patchouli.client.book.BookCategory;
 import vazkii.patchouli.client.book.BookContents;
 import vazkii.patchouli.client.book.BookEntry;
@@ -121,6 +122,7 @@ public class BookProcessor {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void doEntry(Book book, BookEntry entry, int index, TextParser parser, ResourceProvider provider) {
 		if (entry == null || book == null) {
 			PatchouliWeb.logger.warn("Could not load BookEntry, book or entry is null!");
@@ -130,7 +132,9 @@ public class BookProcessor {
 		StringBuilder sb = new StringBuilder();
 		sb.append(buildEntryFrontMatter(book, entry, index));
 		sb.append("\n\n");
-		for (BookPage page : entry.getPages()) {
+		// entry.getPages() only provides unlocked pages
+		List<BookPage> pages = (List<BookPage>) ReflectionHelper.getPrivateValue(BookEntry.class, entry, "realPages");
+		for (BookPage page : pages) {
 			sb.append(doPage(page, parser, provider));
 			sb.append("\n\n");
 		}

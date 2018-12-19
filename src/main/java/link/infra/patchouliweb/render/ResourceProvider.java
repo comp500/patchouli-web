@@ -62,8 +62,6 @@ public class ResourceProvider {
 	}
 	
 	public void renderAll(File outputFolder) {
-		PatchouliWeb.logger.info("hello there");
-		
 		ItemStackRenderer renderer = new ItemStackRenderer();
 		renderer.setUpRenderState(64);
 		for (Entry<String, ItemStack> entry : stacks.entrySet()) {

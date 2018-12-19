@@ -51,12 +51,15 @@ public class ClientProxy extends CommonProxy {
 			}
 			
 			BookProcessor processor = new BookProcessor(templateLoader);
+			PatchouliWeb.logger.info("Processing books...");
 			processor.processBooks();
 
 			if (isRenderEnabled()) {
+				PatchouliWeb.logger.info("Rendering images...");
 				processor.renderImages();
 			}
 			
+			PatchouliWeb.logger.info("Book rendering complete!");
 			if (shouldQuitGame()) {
 				// Our work is done, quit the game
 				PatchouliWeb.successExit_NOT_AN_ERROR();

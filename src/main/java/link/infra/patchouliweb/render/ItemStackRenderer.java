@@ -81,9 +81,6 @@ public class ItemStackRenderer {
 		Minecraft mc = Minecraft.getMinecraft();
 		ScaledResolution res = new ScaledResolution(mc);
 		
-		// --- NOTE: Maybe move to before/after rendering any progress bar thing?
-		mc.getFramebuffer().unbindFramebuffer();
-		GlStateManager.pushMatrix();
 		/*
 		 * As we render to the back-buffer, we need to cap our render size to be within
 		 * the window's bounds. If we didn't do this, the results of our readPixels up
@@ -127,17 +124,6 @@ public class ItemStackRenderer {
 		Minecraft mc = Minecraft.getMinecraft();
 		
 		mc.getRenderItem().zLevel = oldZLevel;
-		
-		// --- NOTE: Maybe move to before/after rendering any progress bar thing?
-		GlStateManager.popMatrix();
-		mc.updateDisplay();
-		/*
-		 * While OpenGL itself is double-buffered, Minecraft is actually *triple*-buffered.
-		 * This is to allow shaders to work, as shaders are only available in "modern" GL.
-		 * Minecraft uses "legacy" GL, so it renders using a separate GL context to this
-		 * third buffer, which is then flipped to the back buffer with this call.
-		 */
-		mc.getFramebuffer().bindFramebuffer(false);
 	}
 
 	private BufferedImage readPixels(int width, int height) throws InterruptedException {
