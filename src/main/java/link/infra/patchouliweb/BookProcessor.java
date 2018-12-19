@@ -67,7 +67,7 @@ public class BookProcessor {
 			entryName = entryRes.getResourcePath().substring(slashIndex + 1);
 			entryPath = entryRes.getResourcePath().substring(0, slashIndex);
 		}
-		Path folderPath = Paths.get(templateLoader.outputFolder.toString(), "content/page/", bookRes.getResourcePath(), entryPath);
+		Path folderPath = Paths.get(templateLoader.outputFolder.toString(), "content/", bookRes.getResourcePath(), entryPath);
 		folderPath.toFile().mkdirs();
 		return folderPath.resolve(entryName + ".md");
 	}
@@ -115,10 +115,57 @@ public class BookProcessor {
 				categoryOrderMap.put(subCategory, i);
 				i++;
 			}
+			
+			createCategoryPage(category, book, parser);
 		}
 		
 		for (BookEntry entry : contents.entries.values()) {
 			doEntry(book, entry, orderMap.getOrDefault(entry, 1000), parser, provider);
+		}
+		
+		// Index page
+		createIndexPage(book, parser);
+	}
+	
+	private void createIndexPage(Book book, TextParser parser) {
+		StringBuilder sb = new StringBuilder();
+		
+		JsonObject json = new JsonObject();
+		json.addProperty("title", I18n.format(book.name));
+		sb.append(json.toString());
+		sb.append("\n\n");
+		
+		sb.append(parser.processText(I18n.format(book.landingText)));
+		
+		try {
+			Path folderPath = Paths.get(templateLoader.outputFolder.toString(), "content/", book.resourceLoc.getResourcePath());
+			folderPath.toFile().mkdirs();
+			Path indexFilePath = folderPath.resolve("_index.md");
+			List<String> lines = Arrays.asList(sb.toString().split("\n"));
+			Files.write(indexFilePath, lines, Charset.forName("UTF-8"));
+		} catch (IOException e) {
+			PatchouliWeb.logger.error("Error saving book index page", e);
+		}
+	}
+	
+	private void createCategoryPage(BookCategory category, Book book, TextParser parser) {
+		StringBuilder sb = new StringBuilder();
+		
+		JsonObject json = new JsonObject();
+		json.addProperty("title", I18n.format(category.getName()));
+		sb.append(json.toString());
+		sb.append("\n\n");
+		
+		sb.append(parser.processText(I18n.format(category.getDescription())));
+		
+		ResourceLocation indexLoc = new ResourceLocation(category.getResource().getResourceDomain(), category.getResource().getResourcePath() + "/_index");
+		
+		try {
+			Path indexFilePath = resolveEntryPath(book.resourceLoc, indexLoc);
+			List<String> lines = Arrays.asList(sb.toString().split("\n"));
+			Files.write(indexFilePath, lines, Charset.forName("UTF-8"));
+		} catch (IOException e) {
+			PatchouliWeb.logger.error("Error saving book category index page", e);
 		}
 	}
 	
@@ -139,12 +186,12 @@ public class BookProcessor {
 			sb.append("\n\n");
 		}
 		try {
+			// TODO: make entry paths based on parent categories, not actual resloc
 			Path path = resolveEntryPath(book.resourceLoc, entry.getResource());
 			List<String> lines = Arrays.asList(sb.toString().split("\n"));
 			Files.write(path, lines, Charset.forName("UTF-8"));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			PatchouliWeb.logger.error("Error saving book entry", e);
 		}
 	}
 	

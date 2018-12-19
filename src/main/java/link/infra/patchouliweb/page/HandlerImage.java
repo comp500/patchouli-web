@@ -33,7 +33,8 @@ public class HandlerImage implements IHandlerPage {
 		}
 		
 		if (title != null && title.length() > 0) {
-			builder.append("# ");
+			// TODO: make depth configurable
+			builder.append("## ");
 			builder.append(title);
 			builder.append("\n");
 		}

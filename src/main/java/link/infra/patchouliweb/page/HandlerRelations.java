@@ -30,7 +30,8 @@ public class HandlerRelations implements IHandlerPage {
 		if (title == null || title.length() == 0) {
 			title = "Related Chapters";
 		}
-		builder.append("# ");
+		// TODO: make depth configurable
+		builder.append("## ");
 		builder.append(title);
 		builder.append("\n\n");
 		if (entries != null && entries.size() > 0) {

@@ -249,7 +249,7 @@ public class TextParser {
 				return url;
 			} else {
 				ResourceLocation loc = new ResourceLocation(url);
-				return "{{< relref \"/page/" + bookID + "/" + loc.getResourcePath() + ".md\" >}}";
+				return "{{< relref \"/" + bookID + "/" + loc.getResourcePath() + ".md\" >}}";
 			}
 		}
 		

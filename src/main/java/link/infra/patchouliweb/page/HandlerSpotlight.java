@@ -26,11 +26,13 @@ public class HandlerSpotlight implements IHandlerPage {
 		}
 		
 		if (title != null && title.length() > 0) {
-			builder.append("# ");
+			// TODO: make depth configurable
+			builder.append("## ");
 			builder.append(title);
 			builder.append("\n\n");
 		} else if (item != null) {
-			builder.append("# ");
+			// TODO: make depth configurable
+			builder.append("## ");
 			builder.append(item.getDisplayName());
 			builder.append("\n\n");
 		}

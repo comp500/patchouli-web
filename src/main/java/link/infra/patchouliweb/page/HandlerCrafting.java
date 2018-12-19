@@ -31,7 +31,8 @@ public class HandlerCrafting implements IHandlerPage {
 		}
 		
 		if (title1 != null && title1.length() > 0) {
-			builder.append("# ");
+			// TODO: make depth configurable
+			builder.append("## ");
 			builder.append(title1);
 			builder.append("\n");
 		}
@@ -41,7 +42,8 @@ public class HandlerCrafting implements IHandlerPage {
 		}
 		
 		if (title2 != null && title2.length() > 0 && !title2.equals("-")) {
-			builder.append("# ");
+			// TODO: make depth configurable
+			builder.append("## ");
 			builder.append(title2);
 			builder.append("\n");
 		}
