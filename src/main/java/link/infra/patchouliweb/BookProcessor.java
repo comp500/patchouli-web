@@ -17,6 +17,7 @@ import com.google.gson.JsonObject;
 
 import link.infra.patchouliweb.page.HandlerCrafting;
 import link.infra.patchouliweb.page.HandlerEmpty;
+import link.infra.patchouliweb.page.HandlerEntity;
 import link.infra.patchouliweb.page.HandlerImage;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;
@@ -232,8 +233,9 @@ public class BookProcessor {
 		pageHandlers.add(new HandlerImage());
 		pageHandlers.add(new HandlerCrafting());
 		pageHandlers.add(new HandlerSmelting());
+		// To make entity pages (and possibly also multiblock pages) work, I need to write a FakeWorld class
 		// TODO: multiblock page
-		// TODO: entity page
+		//pageHandlers.add(new HandlerEntity());
 		pageHandlers.add(new HandlerSpotlight());
 		pageHandlers.add(new HandlerLink());
 		pageHandlers.add(new HandlerRelations());

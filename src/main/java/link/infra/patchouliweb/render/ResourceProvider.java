@@ -14,6 +14,7 @@ import java.util.Set;
 
 import link.infra.patchouliweb.PatchouliWeb;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -21,6 +22,7 @@ public class ResourceProvider {
 	
 	private Map<String, ItemStack> stacks = new HashMap<String, ItemStack>();
 	private Set<ResourceLocation> images = new HashSet<ResourceLocation>();
+	private Map<String, Entity> entities = new HashMap<String, Entity>();
 	
 	// TODO: support more efficient formats?
 	private static final String FILE_FORMAT = ".png";
@@ -61,13 +63,34 @@ public class ResourceProvider {
 		return getImageFileName(loc);
 	}
 	
-	public void renderAll(File outputFolder) {
-		ItemStackRenderer renderer = new ItemStackRenderer();
-		renderer.setUpRenderState(64);
-		for (Entry<String, ItemStack> entry : stacks.entrySet()) {
-			renderer.render(entry.getValue(), outputFolder, entry.getKey());
+	public String requestEntity(Entity entity) {
+		// Check stack doesn't already exist
+		for (Entry<String, Entity> entry : entities.entrySet()) {
+			if (entity.isEntityEqual(entry.getValue())) {
+				return entry.getKey() + FILE_FORMAT;
+			}
 		}
-		renderer.tearDownRenderState();
+		
+		String fileName = "entity_" + entity.getName().replaceAll("[^A-Za-z0-9-_ ]", "_");
+		if (entities.containsKey(fileName)) { // ensure no duplicates
+			int i = 1; // start at _2
+			do {
+				i++;
+			} while (entities.containsKey(fileName + "_" + i));
+			fileName = fileName + "_" + i;
+		}
+		
+		entities.put(fileName, entity);
+		return fileName + FILE_FORMAT;
+	}
+	
+	public void renderAll(File outputFolder) {
+		ItemStackRenderer stackRenderer = new ItemStackRenderer();
+		stackRenderer.setup();
+		for (Entry<String, ItemStack> entry : stacks.entrySet()) {
+			stackRenderer.render(entry.getValue(), outputFolder, entry.getKey());
+		}
+		stackRenderer.tearDown();
 		
 		for (ResourceLocation image : images) {
 			String fileName = getImageFileName(image);
@@ -80,6 +103,13 @@ public class ResourceProvider {
 				PatchouliWeb.logger.catching(e);
 			}
 		}
+		
+		EntityRenderer entityRenderer = new EntityRenderer();
+		entityRenderer.setup();
+		for (Entry<String, Entity> entry : entities.entrySet()) {
+			entityRenderer.render(entry.getValue(), outputFolder, entry.getKey());
+		}
+		entityRenderer.tearDown();
 	}
 	
 }
