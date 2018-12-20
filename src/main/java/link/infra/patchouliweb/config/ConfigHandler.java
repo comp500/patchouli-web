@@ -13,15 +13,15 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class ConfigHandler {
 	
 	@Name("Compile books on game start")
-	@LangKey("label.patchouilweb.config.runonstart")
+	@LangKey("label.patchouliweb.config.runonstart")
 	public static boolean runOnStart = true;
 	
 	@Name("Quit game after compiling books")
-	@LangKey("label.patchouilweb.config.quitgame")
+	@LangKey("label.patchouliweb.config.quitgame")
 	public static boolean quitGame = false;
 	
 	@Name("Render images and items in books")
-	@LangKey("label.patchouilweb.config.renderimages")
+	@LangKey("label.patchouliweb.config.renderimages")
 	public static boolean renderImages = true;
 
 	@Mod.EventBusSubscriber

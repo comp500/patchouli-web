@@ -2,6 +2,6 @@ label.patchouliweb.renderbutton.name=Compile books
 label.patchouliweb.renderprogress.name=Compiling...
 label.patchouliweb.blank.name=*Blank page*
 
-label.patchouilweb.config.runonstart=Compile books on game start
-label.patchouilweb.config.quitgame=Quit game after compiling books
-label.patchouilweb.config.renderimages=Render images and items in books
+label.patchouliweb.config.runonstart=Compile books on game start
+label.patchouliweb.config.quitgame=Quit game after compiling books
+label.patchouliweb.config.renderimages=Render images and items in books
