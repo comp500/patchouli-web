@@ -1,4 +1,4 @@
-package link.infra.patchouliweb.gui;
+package link.infra.patchouliweb.config;
 
 import java.util.Set;
 

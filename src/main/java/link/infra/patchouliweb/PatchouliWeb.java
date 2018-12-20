@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli", clientSideOnly = true, guiFactory = "link.infra." + PatchouliWeb.MODID + ".gui.OptionsFactory")
+@Mod(modid = PatchouliWeb.MODID, name = PatchouliWeb.MODNAME, version = PatchouliWeb.VERSION, useMetadata = true, dependencies = "required-after:patchouli", clientSideOnly = true, guiFactory = "link.infra." + PatchouliWeb.MODID + ".config.OptionsFactory")
 public class PatchouliWeb {
 
 	public static final String MODID = "patchouliweb";

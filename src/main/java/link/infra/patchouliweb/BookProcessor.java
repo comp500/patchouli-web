@@ -17,7 +17,6 @@ import com.google.gson.JsonObject;
 
 import link.infra.patchouliweb.page.HandlerCrafting;
 import link.infra.patchouliweb.page.HandlerEmpty;
-import link.infra.patchouliweb.page.HandlerEntity;
 import link.infra.patchouliweb.page.HandlerImage;
 import link.infra.patchouliweb.page.HandlerLink;
 import link.infra.patchouliweb.page.HandlerRelations;

@@ -2,6 +2,7 @@ package link.infra.patchouliweb;
 
 import java.io.IOException;
 
+import link.infra.patchouliweb.config.ConfigHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -11,7 +12,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 
 public class ClientProxy extends CommonProxy {
 	TemplateLoader templateLoader;
-	boolean shouldProcess = true;
+	boolean shouldProcess = false;
 	public static ClientProxy INSTANCE = null;
 	
 	public ClientProxy() {
@@ -20,11 +21,9 @@ public class ClientProxy extends CommonProxy {
 	
 	@Override
 	public void preInit(FMLPreInitializationEvent e) {
-		if (!isEnabled()) {
-			PatchouliWeb.logger.info("Patchouli Web is not enabled.");
-			return;
+		if (ConfigHandler.runOnStart) {
+			startProcessing();
 		}
-		MinecraftForge.EVENT_BUS.register(this);
 		templateLoader = new TemplateLoader();
 		templateLoader.loadTemplates(e);
 	}
@@ -54,13 +53,13 @@ public class ClientProxy extends CommonProxy {
 			PatchouliWeb.logger.info("Processing books...");
 			processor.processBooks();
 
-			if (isRenderEnabled()) {
+			if (ConfigHandler.renderImages) {
 				PatchouliWeb.logger.info("Rendering images...");
 				processor.renderImages();
 			}
 			
 			PatchouliWeb.logger.info("Book rendering complete!");
-			if (shouldQuitGame()) {
+			if (ConfigHandler.quitGame) {
 				// Our work is done, quit the game
 				PatchouliWeb.successExit_NOT_AN_ERROR();
 				return;
@@ -69,23 +68,6 @@ public class ClientProxy extends CommonProxy {
 			// If the game hasn't exited, prevent onFrameStart from being called again and wasting CPU cycles checking shouldProcess
 			MinecraftForge.EVENT_BUS.unregister(this);
 		}
-	}
-	
-	// TODO: make these configurations
-	public boolean isEnabled() { // merge with isrenderbuttonenabled/shouldquitgame??
-		return true;
-	}
-	
-	public boolean isRenderEnabled() {
-		return true;
-	}
-	
-	public boolean shouldQuitGame() {
-		return false;
-	}
-	
-	public boolean isRenderButtonEnabled() {
-		return true;
 	}
 	
 	public void startProcessing() {

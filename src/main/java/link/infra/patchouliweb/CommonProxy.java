@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 public class CommonProxy {
 
 	public void preInit(FMLPreInitializationEvent e) {
+		PatchouliWeb.logger.info(PatchouliWeb.MODNAME + " is disabled, as it only works on the client");
 	}
 
 	public void init(FMLInitializationEvent e) {

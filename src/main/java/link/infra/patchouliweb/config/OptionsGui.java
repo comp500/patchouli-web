@@ -1,10 +1,12 @@
-package link.infra.patchouliweb.gui;
+package link.infra.patchouliweb.config;
 
 import link.infra.patchouliweb.ClientProxy;
 import link.infra.patchouliweb.PatchouliWeb;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import net.minecraftforge.fml.client.config.GuiConfig;
 
@@ -27,6 +29,12 @@ public class OptionsGui extends GuiConfig {
 	protected void actionPerformed(GuiButton button) {
 		super.actionPerformed(button);
 		if (button.id == 0) {
+			// Manually save config
+			if (this.entryList.hasChangedEntry(true)) {
+				this.entryList.saveConfigElements();
+				ConfigManager.sync(PatchouliWeb.MODID, Config.Type.INSTANCE);
+			}
+			
 			queueProcessing = true;
 		}
 	}
