@@ -7,6 +7,14 @@ body {
 	margin: 0 auto;
 }
 
+.text-item {
+	color: #b0b;
+}
+
+.text-thing {
+	color: #490;
+}
+
 /* Itemstack Rendering */
 
 .itemstack img {
