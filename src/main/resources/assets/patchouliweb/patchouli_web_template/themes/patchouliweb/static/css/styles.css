@@ -18,7 +18,7 @@ body {
 	display: none;
 }
 
-.itemstack, .empty-item {
+.itemstack {
 	width: 32px;
 	height: 32px;
 	background-color: #8B8B8B;
@@ -26,10 +26,11 @@ body {
 	border: 2px solid;
 	border-color: #373737 #FFF #FFF #373737;
 	position: relative;
+	vertical-align: top;
 }
 
 /* Magic for corners */
-.itemstack::before, .itemstack::after, .empty-item::before, .empty-item::after {
+.itemstack::before, .itemstack::after {
 	background-color: #8B8B8B;
 	width: 2px;
 	height: 2px;
@@ -37,12 +38,12 @@ body {
 	position: absolute;
 }
 
-.itemstack::before, .empty-item::before {
+.itemstack::before {
 	bottom: -2px;
 	left: -2px;
 }
 
-.itemstack::after, .empty-item::after {
+.itemstack::after {
 	top: -2px;
 	right: -2px;
 }
@@ -62,6 +63,30 @@ body {
 
 .itemstack-tooltip-js p {
 	margin: 0;
+}
+
+.itemstack-count {
+	position: absolute;
+    bottom: 0;
+    right: 2px;
+    color: white;
+    text-shadow: #3F3F3F 2px 2px 0;
+    font-size: 17px;
+}
+
+.itemstack-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 32px;
+	height: 32px;
+	background-color: white;
+	visibility: hidden;
+}
+
+.itemstack:hover .itemstack-overlay {
+	visibility: visible !important;
+    opacity: 0.45;
 }
 
 /* Render images with pixels */
@@ -106,4 +131,34 @@ img {
 .spotlight .itemstack::after {
 	top: -4px;
 	right: -4px;
+}
+
+/* Crafting recipes */
+.crafting-recipe {
+	display: inline-flex;
+	align-items: center;
+	background-color: #c6c6c6;
+	padding: 15px;
+}
+
+.recipe-rows {
+	margin-right: 14px;
+}
+
+.crafting-arrow {
+	margin-right: 14px;
+}
+
+.crafting-recipe-output .itemstack {
+	padding: 8px;
+}
+
+.crafting-recipe-output .itemstack-count {
+	bottom: 4px;
+	right: 6px;
+}
+
+.crafting-recipe-output .itemstack-overlay {
+	top: 8px;
+	left: 8px;
 }

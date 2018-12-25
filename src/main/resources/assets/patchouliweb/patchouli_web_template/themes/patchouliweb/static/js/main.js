@@ -25,29 +25,39 @@ mainTooltip.classList.add("itemstack-tooltip-js");
 document.body.appendChild(mainTooltip);
 
 let previousTarget = null;
+let previousTooltipFound = false;
 let previousHTML = null;
 let recalcTooltip = (e) => {
-	if (e.target != previousTarget) {
-		previousTarget = e.target;
-		for (let tooltip of e.target.childNodes) {
+	let tooltipFound = false;
+	if (e.currentTarget != previousTarget) {
+		previousTarget = e.currentTarget;
+		for (let tooltip of e.currentTarget.childNodes) {
 			if (tooltip.classList != null && tooltip.classList.contains("itemstack-tooltip")) {
 				if (tooltip.innerHTML != previousHTML) {
 					previousHTML = tooltip.innerHTML;
 					mainTooltip.innerHTML = previousHTML;
 				}
+				tooltipFound = true;
 				break;
 			}
 		}
+		previousTooltipFound = tooltipFound;
+	} else {
+		tooltipFound = previousTooltipFound;
 	}
-	mainTooltip.style.left =
-		(e.clientX + mainTooltip.clientWidth + 10 < document.documentElement.clientWidth)
-		? (e.clientX + window.scrollX + 10 + "px")
-		: (document.documentElement.clientWidth + window.scrollX - 5 - mainTooltip.clientWidth + "px");
-	mainTooltip.style.top =
-		(e.clientY + mainTooltip.clientHeight + 10 < document.documentElement.clientHeight)
-		? (e.clientY + window.scrollY + 10 + "px")
-		: (document.documentElement.clientHeight + window.scrollY - 5 - mainTooltip.clientHeight + "px");
-	mainTooltip.style.display = "inline-block";
+	if (tooltipFound) {
+		mainTooltip.style.left =
+			(e.clientX + mainTooltip.clientWidth + 10 < document.documentElement.clientWidth)
+			? (e.clientX + window.scrollX + 10 + "px")
+			: (document.documentElement.clientWidth + window.scrollX - 5 - mainTooltip.clientWidth + "px");
+		mainTooltip.style.top =
+			(e.clientY + mainTooltip.clientHeight + 10 < document.documentElement.clientHeight)
+			? (e.clientY + window.scrollY + 10 + "px")
+			: (document.documentElement.clientHeight + window.scrollY - 5 - mainTooltip.clientHeight + "px");
+		mainTooltip.style.display = "inline-block";
+	} else {
+		mainTooltip.style.display = "none";
+	}
 };
 
 for (let item of document.getElementsByClassName("itemstack")) {

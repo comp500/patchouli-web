@@ -97,7 +97,9 @@ public class HandlerCrafting implements IHandlerPage {
 			}
 			builder.append("{{< /items/reciperow >}}");
 		}
+		builder.append("{{< items/craftingrecipeoutput >}}");
 		ItemStackUtils.addItemStack(recipe.getRecipeOutput(), provider, builder, parser);
+		builder.append("{{< /items/craftingrecipeoutput >}}");
 		builder.append("{{< /items/craftingrecipe >}}\n\n");
 	}
 
